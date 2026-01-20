@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Configuration du thème AgriAlert v4 */
+@theme {
+  --color-agri-dark: #4A5149;      /* Fond principal */
+  --color-agri-sidebar: #3E443D;   /* Barre latérale */
+  --color-agri-green: #00FF66;     /* Boutons et accents */
+  --color-agri-kpi: #B5BAB4;       /* Blocs de statistiques */
+  --color-agri-border: #555C54;    /* Bordures subtiles */
+}
+
+/* Reset et styles de base */
+@layer base {
+  body {
+    @apply bg-agri-dark text-white antialiased;
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Pour s'assurer que l'application prend toute la hauteur */
+  #root {
+    min-height: 100vh;
+  }
+}
