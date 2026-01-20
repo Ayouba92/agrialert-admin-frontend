@@ -8,7 +8,7 @@ export default function Layout({ children, activeSection, setActiveSection }) {
       <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
       
       {/* Contenu défilable */}
-      <div className="flex-1 h-screen overflow-y-auto">
+      <div className="flex-1 h-screen overflow-y-auto scroll-smooth">
         {children}
       </div>
     </div>

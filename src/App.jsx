@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import DashboardNational from './features/dashboard/DashboardNational';
 
@@ -6,18 +6,17 @@ import DashboardNational from './features/dashboard/DashboardNational';
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
 
-  const renderSection = () => {
-    switch (activeSection) {
-      case 'dashboard':
-        return <DashboardNational />;
-      default:
-        return <DashboardNational />;
+  // Scroll vers la section correspondante (id="dashboard", "users", "analytics", "reports")
+  useEffect(() => {
+    const el = document.getElementById(activeSection);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  };
+  }, [activeSection]);
 
   return (
     <Layout activeSection={activeSection} setActiveSection={setActiveSection}>
-      {renderSection()}
+      <DashboardNational />
     </Layout>
   );
 }
