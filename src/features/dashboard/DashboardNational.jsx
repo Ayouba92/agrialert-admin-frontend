@@ -8,7 +8,7 @@ export default function DashboardNational() {
   return (
     <div className="p-8 space-y-10 animate-in fade-in duration-500 text-white">
 
-      {/* ✅ SECTION DASHBOARD (ancre) */}
+      {/*  SECTION DASHBOARD (ancre) */}
       <section id="dashboard" className="space-y-6">
         {/* 1. TOP BAR - Titre et Déconnexion */}
         <div className="flex justify-between items-center bg-[#566056] p-4 rounded-xl border border-white/10 shadow-lg">
@@ -45,12 +45,12 @@ export default function DashboardNational() {
 
           {/* RIGHT SIDE: Analytics + Reports */}
           <div className="col-span-12 lg:col-span-4 space-y-8">
-            {/* ✅ SECTION ANALYTICS (ancre) */}
+            {/*  SECTION ANALYTICS (ancre) */}
             <section id="analytics">
               <DataAnalysis />
             </section>
 
-            {/* ✅ SECTION REPORTS (ancre) */}
+            {/*  SECTION REPORTS (ancre) */}
             <section id="reports">
               <ExportReports />
             </section>
@@ -58,7 +58,7 @@ export default function DashboardNational() {
         </div>
       </section>
 
-      {/* ✅ SECTION USERS (ancre) */}
+      {/*  SECTION USERS (ancre) */}
       <section id="users" className="space-y-4">
         <UserTable />
       </section>
