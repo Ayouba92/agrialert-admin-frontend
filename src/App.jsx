@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import DashboardNational from './features/dashboard/DashboardNational';
 import Login from './features/auth/Login';
+import { authService } from './services/authService'; 
 
 function App() {
-  // État pour gérer la connexion
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 1. On initialise l'état en vérifiant si un token existe déjà dans le localStorage
+  const [isLoggedIn, setIsLoggedIn] = useState(authService.isAuthenticated());
   const [activeSection, setActiveSection] = useState('dashboard');
 
-  // Gestion du scroll automatique
   useEffect(() => {
     if (isLoggedIn) {
       const el = document.getElementById(activeSection);
@@ -17,6 +17,11 @@ function App() {
       }
     }
   }, [activeSection, isLoggedIn]);
+
+  // Fonction de déconnexion passée au dashboard
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
 
   // Si l'admin n'est pas connecté, on affiche uniquement la page de login
   if (!isLoggedIn) {
@@ -27,15 +32,17 @@ function App() {
   return (
     <Layout activeSection={activeSection} setActiveSection={setActiveSection}>
       <div id="dashboard">
-        <DashboardNational />
+        {/* On passe handleLogout pour que le bouton du Dashboard fonctionne */}
+        <DashboardNational onLogout={handleLogout} />
       </div>
       
-      {/* Conteneurs vides pour le scroll des autres sections */}
       <div id="users" style={{ minHeight: '100vh', padding: '20px' }}>
-        <h2 style={{ color: 'white' }}>Gestion des Utilisateurs (À venir)</h2>
+        <h2 style={{ color: 'white' }}>Gestion des Utilisateurs</h2>
+        {/* Tu pourras placer ton composant UserTable ici plus tard */}
       </div>
+      
       <div id="analytics" style={{ minHeight: '100vh', padding: '20px' }}>
-        <h2 style={{ color: 'white' }}>Analyses de données (À venir)</h2>
+        <h2 style={{ color: 'white' }}>Analyses de données</h2>
       </div>
     </Layout>
   );
