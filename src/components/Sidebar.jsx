@@ -1,6 +1,11 @@
 // Barre latérale 
 import { LayoutDashboard, Users, BarChart3, FileText, LogOut } from 'lucide-react';
+import { authService } from '../services/authService';
 
+
+
+// Récupération des infos de l'admin connecté (optionnel, pour l'affichage)
+const admin = authService.getCurrentUser();
 const Sidebar = ({ activeSection, setActiveSection }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard national', icon: LayoutDashboard },
@@ -16,7 +21,7 @@ const Sidebar = ({ activeSection, setActiveSection }) => {
         <div className="w-20 h-20 rounded-full border-2 border-white overflow-hidden mb-2">
            <img src="/Agriculteur.webp" alt="Admin" className="w-full h-full object-cover" />
         </div>
-        <span className="text-white font-semibold">Admin</span>
+        <span className="text-white font-semibold">{admin.nom}</span>
       </div>
 
       <nav className="flex-1 mt-6">
