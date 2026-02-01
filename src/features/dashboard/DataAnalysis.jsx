@@ -1,14 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from "react";
 
-export default function DataAnalysis() {
-  const regions = useMemo(() => ([
-    'Bamako', 'Kayes', 'Koulikoro', 'Sikasso', 'Ségou',
-    'Mopti', 'Tombouctou', 'Gao', 'Kidal', 'Taoudénit',
-    'Ménaka', 'Nioro', 'Kita', 'Dioïla', 'Nara',
-    'Bougouni', 'Koutiala', 'San', 'Douentza', 'Bandiagara',
-  ]), []);
-
-  const [region, setRegion] = useState('');
+export default function DataAnalysis({
+  regions = [],
+  selectedRegionId = "",
+  onChangeRegionId,
+}) {
+  const selectedLabel = useMemo(() => {
+    const found = regions.find((r) => String(r.id) === String(selectedRegionId));
+    return found ? found.nom : "Aucune";
+  }, [regions, selectedRegionId]);
 
   return (
     <div className="bg-white/10 rounded-2xl p-6 border border-white/10 shadow-xl">
@@ -19,13 +19,15 @@ export default function DataAnalysis() {
 
         <div className="flex gap-3 items-center">
           <select
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
+            value={selectedRegionId}
+            onChange={(e) => onChangeRegionId?.(e.target.value)}
             className="flex-1 bg-white/90 text-black rounded-lg px-3 py-2 outline-none"
           >
-            <option value="">Région</option>
+            <option value="">Région (Toutes)</option>
             {regions.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r.id} value={r.id}>
+                {r.nom}
+              </option>
             ))}
           </select>
 
@@ -34,9 +36,11 @@ export default function DataAnalysis() {
           </button>
         </div>
 
-        {/* Zone résultat (placeholder) */}
         <div className="mt-4 text-sm text-gray-200">
-          Région sélectionnée : <span className="font-bold">{region || 'Aucune'}</span>
+          Région sélectionnée :{" "}
+          <span className="font-bold">
+            {selectedRegionId ? selectedLabel : "Aucune (National)"}
+          </span>
         </div>
       </div>
     </div>

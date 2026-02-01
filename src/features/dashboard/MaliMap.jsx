@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ComposableMap,
   Geographies,
@@ -7,12 +7,11 @@ import {
   Marker
 } from "react-simple-maps";
 
-// Importation de ton fichier GeoJSON (assure-toi qu'il est dans src/assets/ml.json)
 import maliGeoData from "../../assets/ml.json";
+import { adminDashboardService } from "../../services/adminDashboardService";
 
 /**
- * COORDONNÉES PRÉCISES DES CENTRES DES RÉGIONS
- * Ces points permettent d'afficher les noms exactement au bon endroit.
+ * COORDONNÉES CENTRES REGIONS (labels)
  */
 const regionCenters = {
   "Kayes": [-10.5, 14.5],
@@ -29,7 +28,7 @@ const regionCenters = {
 };
 
 /**
- * SIMULATION DE DONNÉES DE PLUIE
+ * SIMULATION PLUIE (coloration régions)
  */
 const rainfallStats = {
   "Kayes": "rare",
@@ -45,23 +44,68 @@ const rainfallStats = {
   "Taoudénit": "rare"
 };
 
-export default function MaliMap({ onRegionSelect }) {
+export default function MaliMap({
+  selectedRegionId = "",
+  onRegionSelect, // (regionName) => ...
+}) {
   const [position, setPosition] = useState({ coordinates: [-4, 17.5], zoom: 1 });
+  const [champs, setChamps] = useState([]);
+  const [loadingChamps, setLoadingChamps] = useState(false);
 
   const getFillColor = (regionName) => {
     const status = rainfallStats[regionName];
     switch (status) {
-      case "abondante": return "#2563eb"; // Bleu
-      case "moyenne":   return "#22c55e"; // Vert
-      case "rare":      return "#f97316"; // Orange
-      default:          return "#4b5563"; // Gris
+      case "abondante": return "#2563eb";
+      case "moyenne":   return "#22c55e";
+      case "rare":      return "#f97316";
+      default:          return "#4b5563";
     }
   };
 
+  //  Charger champs (markers) selon filtre region_id
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoadingChamps(true);
+        const data = await adminDashboardService.getChamps(
+          selectedRegionId ? selectedRegionId : null
+        );
+
+        // data peut être {data: []} selon backend => on normalise
+        const list = Array.isArray(data) ? data : (data.data ?? data.champs ?? []);
+        setChamps(list);
+      } catch (e) {
+        console.error("Erreur chargement champs map:", e);
+        setChamps([]);
+      } finally {
+        setLoadingChamps(false);
+      }
+    };
+
+    load();
+  }, [selectedRegionId]);
+
+  //  markers clean (lat/long)
+  const markers = useMemo(() => {
+    return champs
+      .map((c) => {
+        const lat = Number(c.latitude);
+        const lon = Number(c.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+        return {
+          id: c.id,
+          nom: c.nom ?? "Champ",
+          aire: c.aire ?? 0,
+          coordinates: [lon, lat] // Marker => [lon, lat]
+        };
+      })
+      .filter(Boolean);
+  }, [champs]);
+
   return (
     <div className="relative w-full h-full bg-[#1e293b] rounded-3xl overflow-hidden border border-white/10 shadow-2xl min-h-[500px]">
-      
-      {/* --- LÉGENDE AVEC CORRECTION DES SYMBOLES --- */}
+
+      {/* --- LÉGENDE --- */}
       <div className="absolute top-6 left-6 z-10">
         <h3 className="text-white font-bold text-lg mb-4">Analyse Pluviométrique</h3>
         <div className="flex flex-col gap-2 bg-black/40 p-4 rounded-xl backdrop-blur-md border border-white/10">
@@ -78,32 +122,33 @@ export default function MaliMap({ onRegionSelect }) {
             <span className="text-xs text-gray-200">Rare / Sécheresse (&lt; 500mm)</span>
           </div>
         </div>
+
+        {loadingChamps && (
+          <div className="mt-3 text-xs text-gray-300">Chargement des champs...</div>
+        )}
       </div>
 
       {/* --- CONTRÔLES DE ZOOM --- */}
       <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-2">
-        <button 
-          onClick={() => setPosition(p => ({...p, zoom: p.zoom * 1.2}))}
+        <button
+          onClick={() => setPosition((p) => ({ ...p, zoom: p.zoom * 1.2 }))}
           className="bg-white/10 hover:bg-agri-green text-white hover:text-black w-10 h-10 rounded-lg backdrop-blur-md border border-white/20 transition-all font-bold"
-        > + </button>
-        <button 
-          onClick={() => setPosition(p => ({...p, zoom: p.zoom / 1.2}))}
+        >
+          +
+        </button>
+        <button
+          onClick={() => setPosition((p) => ({ ...p, zoom: p.zoom / 1.2 }))}
           className="bg-white/10 hover:bg-agri-green text-white hover:text-black w-10 h-10 rounded-lg backdrop-blur-md border border-white/20 transition-all font-bold"
-        > - </button>
+        >
+          -
+        </button>
       </div>
 
-      {/* --- CARTE INTERACTIVE --- */}
-      <ComposableMap
-        projection="geoMercator"
-        projectionConfig={{ scale: 2600 }}
-        className="w-full h-full"
-      >
-        <ZoomableGroup
-          zoom={position.zoom}
-          center={position.coordinates}
-          onMoveEnd={setPosition}
-        >
-          {/* Dessin des régions */}
+      {/* --- CARTE --- */}
+      <ComposableMap projection="geoMercator" projectionConfig={{ scale: 2600 }} className="w-full h-full">
+        <ZoomableGroup zoom={position.zoom} center={position.coordinates} onMoveEnd={setPosition}>
+
+          {/* régions */}
           <Geographies geography={maliGeoData}>
             {({ geographies }) =>
               geographies.map((geo) => {
@@ -114,18 +159,18 @@ export default function MaliMap({ onRegionSelect }) {
                     geography={geo}
                     onClick={() => onRegionSelect && onRegionSelect(regionName)}
                     style={{
-                      default: { 
-                        fill: getFillColor(regionName), 
-                        stroke: "#0f172a", 
-                        strokeWidth: 0.5, 
-                        outline: "none" 
+                      default: {
+                        fill: getFillColor(regionName),
+                        stroke: "#0f172a",
+                        strokeWidth: 0.5,
+                        outline: "none"
                       },
-                      hover: { 
-                        fill: "#ffffff", 
-                        stroke: "#000", 
-                        strokeWidth: 1, 
-                        cursor: "pointer", 
-                        outline: "none" 
+                      hover: {
+                        fill: "#ffffff",
+                        stroke: "#000",
+                        strokeWidth: 1,
+                        cursor: "pointer",
+                        outline: "none"
                       },
                       pressed: { fill: "#00FF66", outline: "none" }
                     }}
@@ -135,31 +180,37 @@ export default function MaliMap({ onRegionSelect }) {
             }
           </Geographies>
 
-          {/* Affichage des Noms (Labels) */}
+          {/*  markers champs */}
+          {markers.map((m) => (
+            <Marker key={m.id} coordinates={m.coordinates}>
+              <circle r={4} fill="#00FF66" stroke="#000" strokeWidth={1} />
+              <title>{`${m.nom} • ${m.aire} Ha`}</title>
+            </Marker>
+          ))}
+
+          {/* labels */}
           {maliGeoData.features.map((feature) => {
             const regionName = feature.properties.name;
             const center = regionCenters[regionName];
+            if (!center) return null;
 
-            if (center) {
-              return (
-                <Marker key={`label-${regionName}`} coordinates={center}>
-                  <text
-                    textAnchor="middle"
-                    className="fill-white font-bold pointer-events-none uppercase"
-                    style={{ 
-                      fontSize: "10px", 
-                      textShadow: "1px 1px 2px rgba(0,0,0,0.9)",
-                      paintOrder: "stroke",
-                      stroke: "#1e293b",
-                      strokeWidth: "2px"
-                    }}
-                  >
-                    {regionName}
-                  </text>
-                </Marker>
-              );
-            }
-            return null;
+            return (
+              <Marker key={`label-${regionName}`} coordinates={center}>
+                <text
+                  textAnchor="middle"
+                  className="fill-white font-bold pointer-events-none uppercase"
+                  style={{
+                    fontSize: "10px",
+                    textShadow: "1px 1px 2px rgba(0,0,0,0.9)",
+                    paintOrder: "stroke",
+                    stroke: "#1e293b",
+                    strokeWidth: "2px"
+                  }}
+                >
+                  {regionName}
+                </text>
+              </Marker>
+            );
           })}
         </ZoomableGroup>
       </ComposableMap>
